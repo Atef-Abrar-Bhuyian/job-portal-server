@@ -9,7 +9,11 @@ const cookieParser = require("cookie-parser");
 
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://job-portal-57df0.web.app",
+      "https://job-portal-57df0.firebaseapp.com",
+    ],
     credentials: true,
   })
 );
@@ -24,7 +28,7 @@ const logger = (req, res, next) => {
 
 const verifyToken = (req, res, next) => {
   console.log("Verify Token Middleware");
-  const token = req?.cookies?.token;
+  const token = req.cookies?.token;
   if (!token) {
     return res.status(401).send({ message: "Unauthorized Access" });
   }
@@ -52,12 +56,12 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
 
     // jobs related api's
     const jobsCollection = client.db("jobPortal").collection("jobs");
@@ -71,22 +75,25 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "5h",
       });
-      
+
       res
         .cookie("token", token, {
           httpOnly: true,
-          secure: false, // false for localhost
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         })
         .send({ success: true });
     });
 
-    app.post('/logout', (req,res)=>{
-      res.clearCookie('token',{
-        httpOnly:true,
-        secure:false
-      })
-      .send({success: true})
-    } )
+    app.post("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
 
     app.get("/jobs", logger, async (req, res) => {
       console.log("inside the job");
@@ -152,6 +159,7 @@ async function run() {
       const email = req.query.email;
       const query = { applicant_email: email };
 
+      // token email !== query email
       if (req.user.email !== req.query.email) {
         return res.status(403).send({ message: "Forbidden Access" });
       }
