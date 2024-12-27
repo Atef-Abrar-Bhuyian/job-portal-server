@@ -71,13 +71,22 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "5h",
       });
+      
       res
         .cookie("token", token, {
           httpOnly: true,
-          secure: false,
+          secure: false, // false for localhost
         })
         .send({ success: true });
     });
+
+    app.post('/logout', (req,res)=>{
+      res.clearCookie('token',{
+        httpOnly:true,
+        secure:false
+      })
+      .send({success: true})
+    } )
 
     app.get("/jobs", logger, async (req, res) => {
       console.log("inside the job");
