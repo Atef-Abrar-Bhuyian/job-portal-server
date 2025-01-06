@@ -22,12 +22,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 const logger = (req, res, next) => {
-  console.log("Inside the logger");
+  // console.log("Inside the logger");
   next();
 };
 
 const verifyToken = (req, res, next) => {
-  console.log("Verify Token Middleware");
+  // console.log("Verify Token Middleware");
   const token = req.cookies?.token;
   if (!token) {
     return res.status(401).send({ message: "Unauthorized Access" });
@@ -96,13 +96,18 @@ async function run() {
     });
 
     app.get("/jobs", logger, async (req, res) => {
-      console.log("inside the job");
       const email = req.query.email;
       let query = {};
+      let sortQuery = {};
+      const set = req.query?.sort;
+
       if (email) {
         query = { hr_email: email };
       }
-      const cursor = jobsCollection.find(query);
+      if(sort == "true"){
+        sortQuery={"salaryRange.min": -1}
+      }
+      const cursor = jobsCollection.find(query).sort(sortQuery);
       const result = await cursor.toArray();
       res.send(result);
     });
