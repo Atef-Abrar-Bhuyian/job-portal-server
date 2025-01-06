@@ -99,7 +99,7 @@ async function run() {
       const email = req.query.email;
       let query = {};
       let sortQuery = {};
-      const set = req.query?.sort;
+      const sort = req.query?.sort;
 
       if (email) {
         query = { hr_email: email };
